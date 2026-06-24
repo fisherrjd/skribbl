@@ -66,7 +66,7 @@ func (h *Handler) transcribeTonic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("received webhook", "event", p.Event, "meeting_id", p.MeetingID, "title", p.Title)
+	slog.Info("received webhook", "title", p.MeetingTitle, "software", p.MeetingSoftware)
 
 	// ACK immediately — processing is async
 	writeJSON(w, http.StatusOK, map[string]any{"received": true})

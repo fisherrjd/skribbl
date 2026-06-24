@@ -1,16 +1,19 @@
 {
-  "event": "meeting.completed",
-  "meeting_id": "mtg_abc123",
-  "title": "Sinch Q3 Product Review",
-  "started_at": "2026-06-24T09:00:00Z",
-  "ended_at": "2026-06-24T10:05:00Z",
-  "duration_secs": 3900,
-  "participants": [
-    {"name": "Jad Fis",   "email": "jad.fis@sinch.com"},
-    {"name": "Alice Lee", "email": "alice.lee@sinch.com"},
-    {"name": "Bob Chen",  "email": "bob.chen@sinch.com"}
+  "webhookBodyType": "advanced",
+  "meetingSoftware": "Teams",
+  "meetingTitle": "Sinch Q3 Product Review",
+  "meetingStartTimestamp": "2026-06-24T09:00:00.000Z",
+  "meetingEndTimestamp": "2026-06-24T10:05:00.000Z",
+  "transcript": [
+    {"personName": "Jad Fis",   "timestamp": "2026-06-24T09:00:10.000Z", "transcriptText": "Good morning everyone, let's get started with the Q3 review. Alice, do you want to kick us off with the roadmap update?"},
+    {"personName": "Alice Lee", "timestamp": "2026-06-24T09:00:25.000Z", "transcriptText": "Sure. So we've reprioritised the Meetings integration to Q3 and pushed the billing work to Q4. The main driver is the Transcribe Tonic rollout."},
+    {"personName": "Bob Chen",  "timestamp": "2026-06-24T09:01:10.000Z", "transcriptText": "That makes sense to me. The infrastructure on our end is ready to support it. We finished the capacity review last week."},
+    {"personName": "Jad Fis",   "timestamp": "2026-06-24T09:01:45.000Z", "transcriptText": "Great. Bob, can you confirm the SLA targets are still achievable with the new timeline?"},
+    {"personName": "Bob Chen",  "timestamp": "2026-06-24T09:02:10.000Z", "transcriptText": "Yes, we're comfortable with 99.9% uptime on the webhook service. We have failover in place."},
+    {"personName": "Alice Lee", "timestamp": "2026-06-24T09:03:00.000Z", "transcriptText": "One thing I wanted to flag — we still haven't confirmed the LM Studio model selection for the processing pipeline."},
+    {"personName": "Jad Fis",   "timestamp": "2026-06-24T09:03:30.000Z", "transcriptText": "That's on me. I'll have it confirmed by end of week. Qwen3 27B is the current front-runner."},
+    {"personName": "Bob Chen",  "timestamp": "2026-06-24T09:04:00.000Z", "transcriptText": "Sounds good. I'll schedule a follow-up with DevOps to make sure the GPU allocation is locked in."},
+    {"personName": "Alice Lee", "timestamp": "2026-06-24T09:04:30.000Z", "transcriptText": "I'll update the roadmap deck and share it before Friday's standup."}
   ],
-  "transcript": "Jad Fis: Good morning everyone, let's get started with the Q3 review. Alice, do you want to kick us off with the roadmap update?\nAlice Lee: Sure. So we've reprioritised the Meetings integration to Q3 and pushed the billing work to Q4. The main driver is the Transcribe Tonic rollout.\nBob Chen: That makes sense to me. The infrastructure on our end is ready to support it. We finished the capacity review last week.\nJad Fis: Great. Bob, can you confirm the SLA targets are still achievable with the new timeline?\nBob Chen: Yes, we're comfortable with 99.9% uptime on the webhook service. We have failover in place.\nAlice Lee: One thing I wanted to flag — we still haven't confirmed the LM Studio model selection for the processing pipeline.\nJad Fis: That's on me. I'll have it confirmed by end of week. Qwen3 27B is the current front-runner.\nBob Chen: Sounds good. I'll schedule a follow-up with DevOps to make sure the GPU allocation is locked in.\nAlice Lee: I'll update the roadmap deck and share it before Friday's standup.",
-  "recording_url": "https://app.transcribetonic.com/recordings/mtg_abc123",
-  "transcript_url": "https://app.transcribetonic.com/transcripts/mtg_abc123"
+  "chatMessages": []
 }
