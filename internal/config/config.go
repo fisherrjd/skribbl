@@ -31,16 +31,12 @@ func Load() (*Config, error) {
 	cfg := &Config{}
 	var missing []string
 
-	required := map[string]*string{
-		"TRANSCRIBE_TONIC_WEBHOOK_SECRET": &cfg.WebhookSecret,
-		"VAULT_PATH":                      &cfg.VaultPath,
-	}
-	for key, dest := range required {
-		if v := os.Getenv(key); v != "" {
-			*dest = v
-		} else {
-			missing = append(missing, key)
-		}
+	cfg.WebhookSecret = os.Getenv("TRANSCRIBE_TONIC_WEBHOOK_SECRET") // optional — skip verification if empty
+
+	if v := os.Getenv("VAULT_PATH"); v != "" {
+		cfg.VaultPath = v
+	} else {
+		missing = append(missing, "VAULT_PATH")
 	}
 	if len(missing) > 0 {
 		return nil, fmt.Errorf("missing required env vars: %v\n→ copy .env.example → .env", missing)

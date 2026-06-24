@@ -51,10 +51,13 @@ func (h *Handler) transcribeTonic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !verifySignature(h.secret, raw, r.Header.Get("X-Tonic-Signature")) {
-		slog.Warn("signature verification failed", "remote", r.RemoteAddr)
-		writeJSON(w, http.StatusUnauthorized, errBody("invalid signature"))
-		return
+	// only verify signature if a secret is configured
+	if h.secret != "" {
+		if !verifySignature(h.secret, raw, r.Header.Get("X-Tonic-Signature")) {
+			slog.Warn("signature verification failed", "remote", r.RemoteAddr)
+			writeJSON(w, http.StatusUnauthorized, errBody("invalid signature"))
+			return
+		}
 	}
 
 	var p Payload
