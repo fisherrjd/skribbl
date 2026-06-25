@@ -3,6 +3,8 @@ package processor
 import (
 	"fmt"
 	"strings"
+
+	"sinch/meetings/internal/kb"
 )
 
 // ── meeting summary ───────────────────────────────────────────────────────────
@@ -43,17 +45,17 @@ func summaryPrompt(title, date, duration, software string, participants []string
 	// build YAML frontmatter — generated in Go so it's always valid
 	yamlLines := make([]string, len(participants))
 	for i, p := range participants {
-		yamlLines[i] = fmt.Sprintf("  - \"[[%s]]\"", p)
+		yamlLines[i] = fmt.Sprintf("  - \"[[people/%s|%s]]\"", kb.NameSlug(p), p)
 	}
 	frontmatter := fmt.Sprintf(
 		"---\ndate: %s\nduration: %s\nsoftware: %s\nparticipants:\n%s\ntags:\n  - meeting\n---",
 		date, duration, software, strings.Join(yamlLines, "\n"),
 	)
 
-	// wikilinks for the footer
+	// wikilinks for the footer — people/<slug>|Name so Obsidian resolves correctly
 	wikilinks := make([]string, len(participants))
 	for i, p := range participants {
-		wikilinks[i] = fmt.Sprintf("[[%s]]", p)
+		wikilinks[i] = fmt.Sprintf("[[people/%s|%s]]", kb.NameSlug(p), p)
 	}
 	footerLinks := strings.Join(wikilinks, " · ")
 

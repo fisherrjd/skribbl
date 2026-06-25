@@ -72,6 +72,11 @@ func WritePersonProfile(vaultPath, name, content string) error {
 	return WriteFile(PersonPath(vaultPath, name), content)
 }
 
+// NameSlug returns the slug used for a person's profile filename.
+func NameSlug(s string) string {
+	return nameSlug(s)
+}
+
 // PersonPath returns the file path for a person's profile.
 func PersonPath(vaultPath, name string) string {
 	return filepath.Join(vaultPath, "people", nameSlug(name)+".md")
