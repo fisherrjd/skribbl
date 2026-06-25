@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -115,5 +114,5 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func errBody(msg string) map[string]string {
-	return map[string]string{"error": fmt.Sprintf(msg)}
+	return map[string]string{"error": msg}
 }

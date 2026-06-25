@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"sinch/meetings/internal/kb"
@@ -15,6 +16,7 @@ import (
 type Processor struct {
 	lm        *lmstudio.Client
 	vaultPath string
+	mu        sync.Mutex
 }
 
 func New(lm *lmstudio.Client, vaultPath string) *Processor {
@@ -23,7 +25,13 @@ func New(lm *lmstudio.Client, vaultPath string) *Processor {
 
 func (p *Processor) Process(payload webhook.Payload) {
 	title := coalesce(payload.MeetingTitle, "Untitled Meeting")
-	date  := dateStr(payload.MeetingStartTimestamp)
+	date := dateStr(payload.MeetingStartTimestamp)
+
+	if !p.mu.TryLock() {
+		slog.Info("processor busy; queued meeting", "title", title, "date", date)
+		p.mu.Lock()
+	}
+	defer p.mu.Unlock()
 
 	slog.Info("processing meeting", "title", title, "date", date, "software", payload.MeetingSoftware)
 
@@ -92,6 +100,7 @@ func (p *Processor) generateSummary(payload webhook.Payload, title, date, meetin
 	}
 
 	path := filepath.Join(meetingDir, "summary.md")
+	summary = normalizeGeneratedSummary(strings.TrimSpace(summary))
 	if err := kb.WriteFile(path, summary+"\n"); err != nil {
 		slog.Error("writing summary", "err", err)
 		return
@@ -121,7 +130,8 @@ func (p *Processor) updatePersonProfile(payload webhook.Payload, name, meetingTi
 		return
 	}
 
-	if err := kb.WritePersonProfile(p.vaultPath, name, updated+"\n"); err != nil {
+	updated = strings.TrimSpace(updated)
+	if err := kb.WritePersonProfile(p.vaultPath, name, updated+"\n\n"+meetingHistoryBlock(name)+"\n"); err != nil {
 		slog.Error("writing profile", "person", name, "err", err)
 		return
 	}
