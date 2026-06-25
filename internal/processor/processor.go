@@ -81,11 +81,11 @@ func (p *Processor) generateSummary(payload webhook.Payload, title, date, meetin
 	}
 
 	duration := calcDuration(payload.MeetingStartTimestamp, payload.MeetingEndTimestamp)
-	participants := strings.Join(payload.Participants(), ", ")
+	participants := payload.Participants()
 
 	slog.Info("generating meeting summary", "title", title)
 
-	summary, err := p.lm.Complete(buildSummarySystem(dict), summaryPrompt(title, date, duration, participants, transcript))
+	summary, err := p.lm.Complete(buildSummarySystem(dict), summaryPrompt(title, date, duration, payload.MeetingSoftware, participants, transcript))
 	if err != nil {
 		slog.Error("generating summary", "err", err, "title", title)
 		return

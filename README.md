@@ -1,65 +1,182 @@
-# Transcribe Tonic → Microsoft Teams Webhook
+# Transcribe Tonic → Meetings KB
 
-A single Go binary that ingests meeting data from **Transcribe Tonic** and posts rich Adaptive Card notifications to a **Microsoft Teams** channel.
+A Go service that ingests meeting transcripts from **Transcribe Tonic**, runs them through a local **LM Studio** model, and writes structured meeting summaries and people profiles into an **Obsidian vault**.
 
 ```
 Transcribe Tonic (cloud)
         │  POST /webhook/transcribe-tonic
         │  Header: X-Tonic-Signature: sha256=<hmac-sha256>
         ▼
-┌──────────────────────────────────────┐
-│  main.go  (net/http + graceful stop) │   localhost:5050
-│  • HMAC-SHA256 verification          │
-│  • JSON parsing & structured logging │
-│  • Adaptive Card builder             │
-└──────────────┬───────────────────────┘
-               │  POST Adaptive Card
+┌──────────────────────────────────────────┐
+│  main.go  (net/http + graceful shutdown) │   localhost:5050
+│  • HMAC-SHA256 verification              │
+│  • JSON parsing & structured logging     │
+│  • Async processor dispatch              │
+└──────────────┬───────────────────────────┘
+               │
                ▼
-       Microsoft Teams Channel
+┌──────────────────────────────────────────┐
+│  processor                               │
+│  • Loads Dictionary.md corrections       │
+│  • Saves raw transcript                  │
+│  • Generates meeting summary (LM Studio) │
+│  • Updates per-person profiles           │
+└──────────┬───────────────────────────────┘
+           │  HTTP  │  Writes markdown
+           ▼        ▼
+     LM Studio   Obsidian Vault
+     (local)     ~/vaults/meetings/
 ```
 
 ---
 
-## Quick start
+## How it works
 
-### 1 — Configure secrets
+When a meeting ends, Transcribe Tonic POSTs the transcript to the webhook. The processor then:
 
-```bash
-cp .env.example .env
-# Edit .env:
-#   TRANSCRIBE_TONIC_WEBHOOK_SECRET  — Transcribe Tonic → Settings → Webhooks
-#   TEAMS_WEBHOOK_URL                — Teams channel connector URL
+1. **Saves the raw transcript** immediately — source material is never lost
+2. **Loads `Dictionary.md`** from the vault root — any known transcription corrections are injected into the LLM system prompt
+3. **Generates a summary** via LM Studio — written as an Obsidian-native note with YAML frontmatter, a callout overview, and a structured action items table
+4. **Updates person profiles** for every participant — each person gets a running profile in `people/` that is enriched after every meeting they appear in
+
+### Vault structure
+
+```
+~/vaults/meetings/
+├── Dictionary.md                          ← transcription correction reference
+├── meetings/
+│   └── YYYY-MM-DD-<slug>/
+│       ├── transcript.md                  ← raw transcript
+│       └── summary.md                     ← AI-generated summary
+└── people/
+    └── <name-slug>.md                     ← per-person running profile
 ```
 
-### 2 — Install as a local launchd service
+### Summary format
 
-```bash
-make install
+Summaries are written as Obsidian-native markdown:
+
+```markdown
+---
+date: 2026-06-24
+duration: 43m
+software: Microsoft Teams
+participants:
+  - "[[Person One]]"
+  - "[[Person Two]]"
+tags:
+  - meeting
+---
+
+# Meeting Title
+
+> [!abstract] Overview
+> 2–3 sentence overview of the meeting.
+
+## Key Discussion Points
+- **Topic:** detail
+
+## Decisions Made
+- Decision made
+
+## Action Items
+
+| Owner | Action | Status |
+|---|---|---|
+| [[Person One]] | Do the thing | ⬜ |
+
+## Next Steps
+- Follow-up item
+
+---
+[[Person One]] · [[Person Two]]
 ```
 
-This will:
-- Build the binary
-- Render and install `~/Library/LaunchAgents/com.sinch.meetings.plist`
-- Load it into launchd — **starts now and auto-starts on every login**
-- Restart automatically if it ever crashes
+---
 
-### Service management
+## Transcription Dictionary
+
+`Dictionary.md` at the vault root is a manually maintained reference of known transcription errors — words or names that Transcribe Tonic consistently mishears. It is loaded fresh on every webhook, so edits take effect immediately without a service restart.
+
+Add entries whenever you spot a mistake in a summary or transcript:
+
+| Transcribed As | Correct Term | Notes |
+|---|---|---|
+| KOP | COP | Sinch's internal deployment & observability platform |
+
+---
+
+## Service management
+
+The service runs as a **nix-darwin launchd agent** on `gjallar`. It starts automatically on login and restarts on crash.
 
 ```bash
-make stop      # stop the service
-make start     # start it again
-make restart   # stop + start
-make status    # check if it's running (PID)
-make logs      # tail -f the log file
-make uninstall # stop + remove the plist entirely
+# check status
+launchctl list | grep sinch
+
+# tail logs
+tail -f ~/Library/Logs/sinch-meetings/meetings.log
+
+# stop / start
+launchctl stop org.nixos.com.sinch.meetings
+launchctl start org.nixos.com.sinch.meetings
 ```
 
 Logs live at `~/Library/Logs/sinch-meetings/meetings.log`.
 
-### One-off / dev run (no service)
+### Deploying changes
+
+The service is managed through the `cfg` nix-darwin flake. To deploy any code changes:
 
 ```bash
+# 1 — commit changes in this repo
+cd ~/Sinch/Meetings
+git add -A && git commit -m "your message"
+
+# 2 — update the lock in cfg to pick up the new commit
+cd ~/cfg
+nix flake lock --update-input sinch-meetings
+
+# 3 — rebuild and restart
+darwin-rebuild switch --flake .#gjallar
+```
+
+nix-darwin handles rebuilding the binary, updating the plist, and bouncing the service automatically.
+
+### One-off / dev run
+
+```bash
+cd ~/Sinch/Meetings
 go run .
+```
+
+The service loads its config from `.env` in the working directory. The live secrets live at `~/.config/sinch/meetings/.env`.
+
+---
+
+## Manual ingest CLI
+
+Use the ingest tool to manually push a Transcribe Tonic `.txt` file through the pipeline — useful for reprocessing old meetings or ones that didn't come through automatically.
+
+```bash
+# the service must be running first
+./ingest -file ~/path/to/transcript.txt
+
+# against a different target (e.g. dev instance)
+./ingest -file ~/path/to/transcript.txt -url http://localhost:5050/webhook/transcribe-tonic
+```
+
+The tool parses the meeting title and timestamp directly from the Transcribe Tonic filename format:
+```
+Teams transcript-<Title> at MM-DD-YYYY, HH-MM AM on.txt
+```
+
+Do not rename the file before ingesting.
+
+To rebuild the binary:
+```bash
+cd ~/Sinch/Meetings
+go build -o ingest ./cmd/ingest
 ```
 
 ---
@@ -79,26 +196,17 @@ ngrok http 5050
 
 1. **Settings → Webhooks → Add Webhook**
 2. **URL**: `https://<ngrok-url>/webhook/transcribe-tonic`
-3. **Events**: `meeting.completed`, `transcript.ready`, etc.
-4. **Secret**: same value as `TRANSCRIBE_TONIC_WEBHOOK_SECRET` in `.env`
-
----
-
-## Register Incoming Webhook in Teams
-
-1. Open the target Teams channel
-2. **Manage channel → Connectors → Incoming Webhook → Configure**
-3. Copy the generated URL → paste into `TEAMS_WEBHOOK_URL` in `.env`
+3. **Secret**: same value as `TRANSCRIBE_TONIC_WEBHOOK_SECRET` in `.env`
 
 ---
 
 ## Endpoints
 
 | Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET`  | `/health` | None | Liveness probe |
+|---|---|---|---|
+| `GET` | `/health` | None | Liveness probe |
 | `POST` | `/webhook/transcribe-tonic` | HMAC-SHA256 | Primary receiver |
-| `POST` | `/webhook/test` | None | Card preview *(DEBUG=true only)* |
+| `POST` | `/webhook/test` | None | Payload preview *(DEBUG=true only)* |
 
 ---
 
@@ -121,43 +229,44 @@ curl -s -X POST http://localhost:5050/webhook/transcribe-tonic \
      -d "$BODY" | jq
 ```
 
-### Test card preview (no auth — debug mode only)
-```bash
-# Set DEBUG=true in .env first
-curl -s -X POST http://localhost:5050/webhook/test \
-     -H "Content-Type: application/json" \
-     -d @sample_payload.json | jq
-```
-
 ---
 
 ## Project structure
 
 ```
 Meetings/
-├── default.nix                        ← nix dev environment (go, gopls, go-tools)
+├── default.nix                        ← nix dev environment
+├── flake.nix                          ← nix package + nix-darwin module
+├── module.nix                         ← launchd service + vault git autocommit
 ├── .envrc                             ← direnv hook
 ├── .env.example                       ← secrets template
-├── .gitignore
-├── go.mod
-├── go.sum
-├── main.go                            ← entry point, server, graceful shutdown
+├── main.go                            ← entry point, HTTP server, graceful shutdown
+├── cmd/
+│   └── ingest/main.go                 ← CLI: manually ingest a .txt transcript
 ├── internal/
 │   ├── config/config.go               ← env var loading & validation
-│   ├── webhook/handler.go             ← HTTP handlers + HMAC verification
-│   └── teams/notifier.go              ← Adaptive Card builder + Teams POST
-├── Makefile                           ← build / install / start / stop / logs
-├── com.sinch.meetings.plist.tmpl      ← launchd service template
+│   ├── webhook/
+│   │   ├── handler.go                 ← HTTP handlers + HMAC verification
+│   │   └── payload.go                 ← Transcribe Tonic payload types
+│   ├── lmstudio/client.go             ← LM Studio HTTP client
+│   ├── processor/
+│   │   ├── processor.go               ← orchestrates transcript → vault pipeline
+│   │   └── prompts.go                 ← LLM system prompts + user prompt builders
+│   └── kb/kb.go                       ← vault file I/O helpers
 ├── sample_payload.json
 └── README.md
 ```
 
+---
+
 ## Environment variables
 
 | Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `TRANSCRIBE_TONIC_WEBHOOK_SECRET` | ✅ | — | HMAC signing secret |
-| `TEAMS_WEBHOOK_URL` | ✅ | — | Teams Incoming Webhook URL |
-| `FLASK_HOST` | No | `0.0.0.0` | Bind address |
-| `FLASK_PORT` | No | `5050` | Port |
-| `DEBUG` | No | `false` | Enable debug logging + `/webhook/test` |
+|---|---|---|---|
+| `VAULT_PATH` | Yes | — | Absolute path to the Obsidian vault |
+| `TRANSCRIBE_TONIC_WEBHOOK_SECRET` | No | — | HMAC signing secret — skips verification if empty |
+| `LM_STUDIO_URL` | No | `http://localhost:1234` | LM Studio server URL |
+| `LM_MODEL` | No | `qwen3-27b-instruct` | Model identifier passed to LM Studio |
+| `HOST` | No | `0.0.0.0` | Bind address |
+| `PORT` | No | `5050` | Port |
+| `DEBUG` | No | `false` | Verbose logging + enables `/webhook/test` |
