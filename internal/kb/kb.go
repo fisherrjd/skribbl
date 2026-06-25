@@ -53,6 +53,20 @@ func ReadPersonProfile(vaultPath, name string) (string, error) {
 	return string(data), nil
 }
 
+// ReadDictionary reads Dictionary.md from the vault root.
+// Returns empty string (not an error) if the file does not exist yet.
+func ReadDictionary(vaultPath string) (string, error) {
+	path := filepath.Join(vaultPath, "Dictionary.md")
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("read dictionary: %w", err)
+	}
+	return string(data), nil
+}
+
 // WritePersonProfile overwrites a person's profile file.
 func WritePersonProfile(vaultPath, name, content string) error {
 	return WriteFile(PersonPath(vaultPath, name), content)

@@ -40,6 +40,16 @@ func (p *Processor) Process(payload webhook.Payload) {
 
 	transcript := payload.TranscriptString()
 
+	// load dictionary fresh each run — edits take effect without a restart
+	dict, err := kb.ReadDictionary(p.vaultPath)
+	if err != nil {
+		slog.Warn("reading dictionary", "err", err)
+	} else if dict != "" {
+		slog.Info("dictionary loaded", "bytes", len(dict))
+	} else {
+		slog.Info("no dictionary found, proceeding without corrections")
+	}
+
 	// 1. save raw transcript immediately — never lose source material
 	if transcript != "" {
 		content := fmt.Sprintf("# Transcript: %s\n\n**Date:** %s\n**Software:** %s\n\n---\n\n%s\n",
@@ -53,18 +63,18 @@ func (p *Processor) Process(payload webhook.Payload) {
 	}
 
 	// 2. generate meeting summary
-	p.generateSummary(payload, title, date, meetingDir, transcript)
+	p.generateSummary(payload, title, date, meetingDir, transcript, dict)
 
 	// 3. update person profiles
 	participants := payload.Participants()
 	for _, name := range participants {
-		p.updatePersonProfile(payload, name, title, date, transcript)
+		p.updatePersonProfile(payload, name, title, date, transcript, dict)
 	}
 
 	slog.Info("processing complete", "title", title, "participants", len(participants))
 }
 
-func (p *Processor) generateSummary(payload webhook.Payload, title, date, meetingDir, transcript string) {
+func (p *Processor) generateSummary(payload webhook.Payload, title, date, meetingDir, transcript, dict string) {
 	if transcript == "" {
 		slog.Warn("empty transcript, skipping summary", "title", title)
 		return
@@ -75,7 +85,7 @@ func (p *Processor) generateSummary(payload webhook.Payload, title, date, meetin
 
 	slog.Info("generating meeting summary", "title", title)
 
-	summary, err := p.lm.Complete(summarySystem, summaryPrompt(title, date, duration, participants, transcript))
+	summary, err := p.lm.Complete(buildSummarySystem(dict), summaryPrompt(title, date, duration, participants, transcript))
 	if err != nil {
 		slog.Error("generating summary", "err", err, "title", title)
 		return
@@ -89,7 +99,7 @@ func (p *Processor) generateSummary(payload webhook.Payload, title, date, meetin
 	slog.Info("summary saved", "path", path)
 }
 
-func (p *Processor) updatePersonProfile(payload webhook.Payload, name, meetingTitle, date, transcript string) {
+func (p *Processor) updatePersonProfile(payload webhook.Payload, name, meetingTitle, date, transcript, dict string) {
 	turns := payload.SpeakerTurns(name)
 	if turns == "" {
 		slog.Info("no speaker turns found, skipping", "person", name)
@@ -105,7 +115,7 @@ func (p *Processor) updatePersonProfile(payload webhook.Payload, name, meetingTi
 
 	slog.Info("updating person profile", "person", name)
 
-	updated, err := p.lm.Complete(profileSystem, profilePrompt(name, date, meetingTitle, existing, turns, allParticipants))
+	updated, err := p.lm.Complete(buildProfileSystem(dict), profilePrompt(name, date, meetingTitle, existing, turns, allParticipants))
 	if err != nil {
 		slog.Error("generating profile", "person", name, "err", err)
 		return

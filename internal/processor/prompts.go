@@ -4,7 +4,37 @@ import "fmt"
 
 // ── meeting summary ───────────────────────────────────────────────────────────
 
-var summarySystem = `You are a professional meeting analyst. Your job is to produce clear, accurate, and useful meeting summaries for a personal knowledge base. Be factual — only include what was actually discussed. Do not fabricate information.`
+func buildSummarySystem(dict string) string {
+	base := `You are a professional meeting analyst. Your job is to produce clear, accurate, and useful meeting summaries for a personal knowledge base. Be factual — only include what was actually discussed. Do not fabricate information.`
+	if dict == "" {
+		return base
+	}
+	return base + `
+
+## Transcription Correction Dictionary
+
+The raw transcript was produced by an automatic speech recognition tool and may contain errors.
+The dictionary below maps known misheard or mistranscribed terms to their correct forms.
+Apply these corrections silently whenever you encounter them — do not mention the corrections in the summary.
+
+` + dict
+}
+
+func buildProfileSystem(dict string) string {
+	base := `You are maintaining a professional knowledge base of people that Jad interacts with at work. Your job is to write or update concise, useful profiles based on meeting transcripts. Be factual and professional. Only include information that can be inferred from the available evidence.`
+	if dict == "" {
+		return base
+	}
+	return base + `
+
+## Transcription Correction Dictionary
+
+The raw transcript was produced by an automatic speech recognition tool and may contain errors.
+The dictionary below maps known misheard or mistranscribed terms to their correct forms.
+Apply these corrections silently — do not mention them in the profile.
+
+` + dict
+}
 
 func summaryPrompt(title, date, duration, participants, transcript string) string {
 	return fmt.Sprintf(`Analyze the following meeting transcript and produce a comprehensive summary in markdown.
@@ -39,8 +69,6 @@ Transcript:
 }
 
 // ── person profile ────────────────────────────────────────────────────────────
-
-var profileSystem = `You are maintaining a professional knowledge base of people that Jad interacts with at work. Your job is to write or update concise, useful profiles based on meeting transcripts. Be factual and professional. Only include information that can be inferred from the available evidence.`
 
 func profilePrompt(name, date, meetingTitle, existingProfile, speakerTurns, allParticipants string) string {
 	existing := existingProfile
