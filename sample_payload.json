@@ -6,7 +6,7 @@
   "meetingEndTimestamp": "2026-06-24T10:05:00.000Z",
   "transcript": [
     {"personName": "Jad Fis",   "timestamp": "2026-06-24T09:00:10.000Z", "transcriptText": "Good morning everyone, let's get started with the Q3 review. Alice, do you want to kick us off with the roadmap update?"},
-    {"personName": "Alice Lee", "timestamp": "2026-06-24T09:00:25.000Z", "transcriptText": "Sure. So we've reprioritised the Meetings integration to Q3 and pushed the billing work to Q4. The main driver is the Transcribe Tonic rollout."},
+    {"personName": "Alice Lee", "timestamp": "2026-06-24T09:00:25.000Z", "transcriptText": "Sure. So we've reprioritised the Meetings integration to Q3 and pushed the billing work to Q4. The main driver is the TranscripTonic rollout."},
     {"personName": "Bob Chen",  "timestamp": "2026-06-24T09:01:10.000Z", "transcriptText": "That makes sense to me. The infrastructure on our end is ready to support it. We finished the capacity review last week."},
     {"personName": "Jad Fis",   "timestamp": "2026-06-24T09:01:45.000Z", "transcriptText": "Great. Bob, can you confirm the SLA targets are still achievable with the new timeline?"},
     {"personName": "Bob Chen",  "timestamp": "2026-06-24T09:02:10.000Z", "transcriptText": "Yes, we're comfortable with 99.9% uptime on the webhook service. We have failover in place."},

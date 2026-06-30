@@ -1,4 +1,4 @@
-module sinch/meetings
+module skribbl
 
 go 1.26.3
 

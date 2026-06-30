@@ -1,10 +1,10 @@
-// cmd/ingest/main.go — manually ingest a Transcriptonic .txt file into the pipeline.
+// cmd/ingest/main.go — manually ingest a TranscripTonic .txt file into the pipeline.
 //
 // Usage:
 //   go run ./cmd/ingest -file ~/Downloads/TranscripTonic/<file>.txt
 //
-// Parses the Transcriptonic plain-text format and POSTs it to the local
-// webhook as an advanced payload, exactly as if Transcriptonic sent it live.
+// Parses the TranscripTonic plain-text format and POSTs it to the local
+// webhook as an advanced payload, exactly as if TranscripTonic sent it live.
 package main
 
 import (
@@ -41,7 +41,7 @@ type payload struct {
 }
 
 func main() {
-	filePath := flag.String("file", "", "path to Transcriptonic .txt file (required)")
+	filePath := flag.String("file", "", "path to TranscripTonic .txt file (required)")
 	webhookURL := flag.String("url", "http://localhost:5050/webhook/transcribe-tonic", "webhook URL")
 	flag.Parse()
 
@@ -93,7 +93,7 @@ func main() {
 	}
 }
 
-// parseTranscript parses the Transcriptonic plain-text format into blocks.
+// parseTranscript parses the TranscripTonic plain-text format into blocks.
 func parseTranscript(text string) []transcriptBlock {
 	var blocks []transcriptBlock
 	lines := strings.Split(strings.TrimSpace(text), "\n")
@@ -129,7 +129,7 @@ func parseTranscript(text string) []transcriptBlock {
 	return blocks
 }
 
-// parseFilename extracts title and ISO timestamp from the Transcriptonic filename.
+// parseFilename extracts title and ISO timestamp from the TranscripTonic filename.
 // Format: "Teams transcript-<title> at MM-DD-YYYY, HH-MM AM on.txt"
 func parseFilename(name string) (title, isoTS string) {
 	name = strings.TrimSuffix(name, ".txt")

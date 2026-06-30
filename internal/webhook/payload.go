@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Payload is the webhook body sent by Transcriptonic.
+// Payload is the webhook body sent by TranscripTonic.
 // transcript and chatMessages are union types ([]Block or string)
 // depending on webhookBodyType — we handle both.
 type Payload struct {

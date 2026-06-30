@@ -7,7 +7,7 @@
     { }
 }:
 let
-  name = "Meetings";
+  name = "skribbl";
 
   tools = with pkgs; {
     cli = [

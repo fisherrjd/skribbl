@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	"sinch/meetings/internal/kb"
-	"sinch/meetings/internal/lmstudio"
-	"sinch/meetings/internal/webhook"
+	"skribbl/internal/kb"
+	"skribbl/internal/lmstudio"
+	"skribbl/internal/webhook"
 )
 
 type Processor struct {

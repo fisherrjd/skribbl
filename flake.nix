@@ -1,5 +1,5 @@
 {
-  description = "Sinch meetings webhook — Transcribe Tonic ingestion + LM Studio KB processor";
+  description = "Skribbl — TranscripTonic meeting notes wrapper + local LLM handoff";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
 
@@ -11,7 +11,7 @@
     {
       # ── binary package ───────────────────────────────────────────────────────
       packages.${system}.default = pkgs.buildGoModule {
-        pname   = "sinch-meetings";
+        pname   = "skribbl";
         version = "0.1.0";
         src     = ./.;
         # vendor/ is committed — no network needed in the nix sandbox
@@ -22,7 +22,7 @@
       darwinModules.default = { config, lib, pkgs, ... }:
         import ./module.nix {
           inherit config lib pkgs;
-          sinch-meetings-pkg = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
+          skribbl-pkg = self.packages.${pkgs.stdenv.hostPlatform.system}.default;
         };
     };
 }

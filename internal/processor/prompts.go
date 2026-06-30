@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"sinch/meetings/internal/kb"
+	"skribbl/internal/kb"
 )
 
 // ── meeting summary ───────────────────────────────────────────────────────────

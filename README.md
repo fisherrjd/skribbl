@@ -1,9 +1,9 @@
-# Transcribe Tonic → Meetings KB
+# Skribbl
 
-A Go service that ingests meeting transcripts from **Transcribe Tonic**, runs them through a local **LM Studio** model, and writes structured meeting summaries and people profiles into an **Obsidian vault**.
+Skribbl is a Go wrapper around **TranscripTonic** that receives meeting notes/transcripts, hands them to a local **LM Studio** model, and writes structured meeting summaries and people profiles into an **Obsidian vault**.
 
 ```
-Transcribe Tonic (cloud)
+TranscripTonic (cloud)
         │  POST /webhook/transcribe-tonic
         │  Header: X-Tonic-Signature: sha256=<hmac-sha256>
         ▼
@@ -32,7 +32,7 @@ Transcribe Tonic (cloud)
 
 ## How it works
 
-When a meeting ends, Transcribe Tonic POSTs the transcript to the webhook. The processor then:
+When a meeting ends, TranscripTonic POSTs the transcript to the webhook. The processor then:
 
 1. **Saves the raw transcript** immediately — source material is never lost
 2. **Loads `Dictionary.md`** from the vault root — any known transcription corrections are injected into the LLM system prompt
@@ -96,7 +96,7 @@ tags:
 
 ## Transcription Dictionary
 
-`Dictionary.md` at the vault root is a manually maintained reference of known transcription errors — words or names that Transcribe Tonic consistently mishears. It is loaded fresh on every webhook, so edits take effect immediately without a service restart.
+`Dictionary.md` at the vault root is a manually maintained reference of known transcription errors — words or names that TranscripTonic consistently mishears. It is loaded fresh on every webhook, so edits take effect immediately without a service restart.
 
 Add entries whenever you spot a mistake in a summary or transcript:
 
@@ -112,17 +112,17 @@ The service runs as a **nix-darwin launchd agent** on `gjallar`. It starts autom
 
 ```bash
 # check status
-launchctl list | grep sinch
+launchctl list | grep skribbl
 
 # tail logs
-tail -f ~/Library/Logs/sinch-meetings/meetings.log
+tail -f ~/Library/Logs/sinch-meetings/skribbl.log
 
 # stop / start
-launchctl stop org.nixos.com.sinch.meetings
-launchctl start org.nixos.com.sinch.meetings
+launchctl stop org.nixos.com.skribbl
+launchctl start org.nixos.com.skribbl
 ```
 
-Logs live at `~/Library/Logs/sinch-meetings/meetings.log`.
+Logs live at `~/Library/Logs/sinch-meetings/skribbl.log` on `gjallar`.
 
 ### Deploying changes
 
@@ -135,7 +135,7 @@ git add -A && git commit -m "your message"
 
 # 2 — update the lock in cfg to pick up the new commit
 cd ~/cfg
-nix flake lock --update-input sinch-meetings
+nix flake lock --update-input skribbl
 
 # 3 — rebuild and restart
 darwin-rebuild switch --flake .#gjallar
@@ -150,13 +150,13 @@ cd ~/Sinch/Meetings
 go run .
 ```
 
-The service loads its config from `.env` in the working directory. The live secrets live at `~/.config/sinch/meetings/.env`.
+The service loads its config from `.env` in the working directory. The live secrets on `gjallar` live at `~/.config/sinch/meetings/.env`.
 
 ---
 
 ## Manual ingest CLI
 
-Use the ingest tool to manually push a Transcribe Tonic `.txt` file through the pipeline — useful for reprocessing old meetings or ones that didn't come through automatically.
+Use the ingest tool to manually push a TranscripTonic `.txt` file through the pipeline — useful for reprocessing old meetings or ones that didn't come through automatically.
 
 ```bash
 # the service must be running first
@@ -166,7 +166,7 @@ Use the ingest tool to manually push a Transcribe Tonic `.txt` file through the 
 ./ingest -file ~/path/to/transcript.txt -url http://localhost:5050/webhook/transcribe-tonic
 ```
 
-The tool parses the meeting title and timestamp directly from the Transcribe Tonic filename format:
+The tool parses the meeting title and timestamp directly from the TranscripTonic filename format:
 ```
 Teams transcript-<Title> at MM-DD-YYYY, HH-MM AM on.txt
 ```
@@ -183,7 +183,7 @@ go build -o ingest ./cmd/ingest
 
 ## Expose locally with ngrok
 
-Transcribe Tonic needs a public HTTPS URL to deliver webhooks.
+TranscripTonic needs a public HTTPS URL to deliver webhooks.
 
 ```bash
 ngrok http 5050
@@ -192,11 +192,11 @@ ngrok http 5050
 
 ---
 
-## Register the webhook in Transcribe Tonic
+## Register the webhook in TranscripTonic
 
 1. **Settings → Webhooks → Add Webhook**
 2. **URL**: `https://<ngrok-url>/webhook/transcribe-tonic`
-3. **Secret**: same value as `TRANSCRIBE_TONIC_WEBHOOK_SECRET` in `.env`
+3. **Secret**: same value as `TRANSCRIPTONIC_WEBHOOK_SECRET` in `.env`
 
 ---
 
@@ -247,7 +247,7 @@ Meetings/
 │   ├── config/config.go               ← env var loading & validation
 │   ├── webhook/
 │   │   ├── handler.go                 ← HTTP handlers + HMAC verification
-│   │   └── payload.go                 ← Transcribe Tonic payload types
+│   │   └── payload.go                 ← TranscripTonic payload types
 │   ├── lmstudio/client.go             ← LM Studio HTTP client
 │   ├── processor/
 │   │   ├── processor.go               ← orchestrates transcript → vault pipeline
@@ -264,9 +264,11 @@ Meetings/
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `VAULT_PATH` | Yes | — | Absolute path to the Obsidian vault |
-| `TRANSCRIBE_TONIC_WEBHOOK_SECRET` | No | — | HMAC signing secret — skips verification if empty |
+| `TRANSCRIPTONIC_WEBHOOK_SECRET` | No | — | HMAC signing secret — skips verification if empty |
 | `LM_STUDIO_URL` | No | `http://localhost:1234` | LM Studio server URL |
 | `LM_MODEL` | No | `qwen3-27b-instruct` | Model identifier passed to LM Studio |
 | `HOST` | No | `0.0.0.0` | Bind address |
 | `PORT` | No | `5050` | Port |
 | `DEBUG` | No | `false` | Verbose logging + enables `/webhook/test` |
+
+`TRANSCRIBE_TONIC_WEBHOOK_SECRET` is still accepted as a legacy fallback.

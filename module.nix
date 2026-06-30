@@ -1,11 +1,11 @@
-{ config, lib, pkgs, sinch-meetings-pkg }:
+{ config, lib, pkgs, skribbl-pkg }:
 let
-  cfg = config.services.sinch-meetings;
+  cfg = config.services.skribbl;
   home = "/Users/${cfg.user}";
 in
 {
-  options.services.sinch-meetings = {
-    enable = lib.mkEnableOption "Sinch meetings webhook + KB processor";
+  options.services.skribbl = {
+    enable = lib.mkEnableOption "Skribbl TranscripTonic webhook + local LLM processor";
 
     user = lib.mkOption {
       type    = lib.types.str;
@@ -14,14 +14,14 @@ in
 
     secretsDir = lib.mkOption {
       type    = lib.types.str;
-      default = "${home}/.config/sinch/meetings";
+      default = "${home}/.config/skribbl";
       description = "Directory containing the .env file — lives outside the nix store";
     };
 
     vaultPath = lib.mkOption {
       type    = lib.types.str;
-      default = "${home}/vaults/meetings";
-      description = "Path to the Obsidian meetings vault";
+      default = "${home}/vaults/skribbl";
+      description = "Path to the Obsidian vault";
     };
 
     port = lib.mkOption {
@@ -32,7 +32,7 @@ in
 
     logDir = lib.mkOption {
       type    = lib.types.str;
-      default = "${home}/Library/Logs/sinch-meetings";
+      default = "${home}/Library/Logs/skribbl";
       description = "Directory for service logs";
     };
   };
@@ -40,21 +40,21 @@ in
   config = lib.mkIf cfg.enable {
 
     # ── webhook + processor ──────────────────────────────────────────────────
-    launchd.user.agents."com.sinch.meetings" = {
+    launchd.user.agents."com.skribbl" = {
       serviceConfig = {
-        ProgramArguments = [ "${sinch-meetings-pkg}/bin/meetings" ];
+        ProgramArguments = [ "${skribbl-pkg}/bin/skribbl" ];
         # godotenv loads .env from WorkingDirectory — secrets never enter the nix store
         WorkingDirectory  = cfg.secretsDir;
         KeepAlive         = true;
         RunAtLoad         = true;
-        StandardOutPath   = "${cfg.logDir}/meetings.log";
-        StandardErrorPath = "${cfg.logDir}/meetings.log";
+        StandardOutPath   = "${cfg.logDir}/skribbl.log";
+        StandardErrorPath = "${cfg.logDir}/skribbl.log";
         ThrottleInterval  = 5;
       };
     };
 
     # ── vault git autocommit (hourly) ────────────────────────────────────────
-    launchd.user.agents."com.sinch.meetings-vault-commit" = {
+    launchd.user.agents."com.skribbl.vault-commit" = {
       serviceConfig = {
         ProgramArguments = [
           "${pkgs.bash}/bin/bash" "-c"

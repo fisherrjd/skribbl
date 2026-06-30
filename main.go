@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"sinch/meetings/internal/config"
-	"sinch/meetings/internal/lmstudio"
-	"sinch/meetings/internal/processor"
-	"sinch/meetings/internal/webhook"
+	"skribbl/internal/config"
+	"skribbl/internal/lmstudio"
+	"skribbl/internal/processor"
+	"skribbl/internal/webhook"
 )
 
 func main() {
@@ -50,13 +50,13 @@ func main() {
 	}
 
 	slog.Info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	slog.Info("  Transcribe Tonic → Meetings KB")
+	slog.Info("  Skribbl: TranscripTonic → local LLM")
 	slog.Info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-	slog.Info("listening",    "addr",      "http://"+addr)
-	slog.Info("webhook",      "path",      "POST /webhook/transcribe-tonic")
-	slog.Info("health",       "path",      "GET  /health")
-	slog.Info("lm studio",    "url",       cfg.LMStudioURL, "model", cfg.LMModel)
-	slog.Info("vault",        "path",      cfg.VaultPath)
+	slog.Info("listening", "addr", "http://"+addr)
+	slog.Info("webhook", "path", "POST /webhook/transcribe-tonic")
+	slog.Info("health", "path", "GET  /health")
+	slog.Info("lm studio", "url", cfg.LMStudioURL, "model", cfg.LMModel)
+	slog.Info("vault", "path", cfg.VaultPath)
 	slog.Info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
 	quit := make(chan os.Signal, 1)

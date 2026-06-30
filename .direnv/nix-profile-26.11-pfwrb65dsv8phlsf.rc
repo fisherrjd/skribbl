@@ -30,9 +30,9 @@ MACHTYPE='aarch64-apple-darwin25.3.0'
 MACOSX_DEPLOYMENT_TARGET='14.0'
 export MACOSX_DEPLOYMENT_TARGET
 NIXUP='0.0.10'
-NIX_ATTRS_JSON_FILE='/private/tmp/nix-dev-env-33278-2344353446/.attrs.json'
+NIX_ATTRS_JSON_FILE='/private/tmp/nix-dev-env-36187-299007150/.attrs.json'
 export NIX_ATTRS_JSON_FILE
-NIX_ATTRS_SH_FILE='/private/tmp/nix-dev-env-33278-2344353446/.attrs.sh'
+NIX_ATTRS_SH_FILE='/private/tmp/nix-dev-env-36187-299007150/.attrs.sh'
 export NIX_ATTRS_SH_FILE
 NIX_BINTOOLS_FOR_TARGET='/nix/store/4z4fknnk4xsf1ffs109fiyg9xyijfbw9-cctools-binutils-darwin-wrapper-1010.6'
 export NIX_BINTOOLS_FOR_TARGET
@@ -44,7 +44,7 @@ NIX_CC_FOR_TARGET='/nix/store/b6igqq05cjkm04jar9b4p3rkp9abcpxi-gcc-wrapper-15.2.
 export NIX_CC_FOR_TARGET
 NIX_CC_WRAPPER_TARGET_TARGET_arm64_apple_darwin='1'
 export NIX_CC_WRAPPER_TARGET_TARGET_arm64_apple_darwin
-NIX_CFLAGS_COMPILE=' -frandom-seed=y34glzp6zj'
+NIX_CFLAGS_COMPILE=' -frandom-seed=l01xpvw8n2'
 export NIX_CFLAGS_COMPILE
 NIX_DONT_SET_RPATH='1'
 export NIX_DONT_SET_RPATH
@@ -138,7 +138,7 @@ includeClosures=''
 initialPath='/nix/store/y0ha8v4gh5vnwwmp2r0msfbdlvgwv2np-coreutils-9.11 /nix/store/3wz2j41nnr1badij6fcnip5vgrfpdd82-findutils-4.10.0 /nix/store/37rdk8zsdbqcp73l3nrmwilwb2ixkacv-diffutils-3.12 /nix/store/v1lxnb2804dgaf9sf60y6najgjs3wjsi-gnused-4.9 /nix/store/209wkryzwczs2nlvwfzkwf4fm8mpr922-gnugrep-3.12 /nix/store/af7n5cc4bzd9c6mwsgh7sfmcbasjr5kd-gawk-5.4.0 /nix/store/3aikbnf5fq99gvw1wb242wrjnbj7fcr9-gnutar-1.35 /nix/store/b7rf7jfkadwjajzfb5430l5k60gwfqa8-gzip-1.14 /nix/store/a6r9ryv9pqcvwv8ffmzi4ichd5br0vl6-bzip2-1.0.8-bin /nix/store/8wwiw8pwyhrkzyq28hqzxfl4z84lks81-gnumake-4.4.1 /nix/store/55976waa157aqb1ncbwm6b8sa64b6m3h-bash-5.3p9 /nix/store/zn3jzk0zwhml7pgx8slyiwmk5zv0ylmh-patch-2.8 /nix/store/h7484di7imn15ihxmhzqrzbaszcaxyhw-xz-5.8.3-bin /nix/store/dax63li7wwcbqxxkkgzc4g2rx7d4w86x-file-5.47'
 manifest=''
 declare -a mesonFlags=()
-name='Meetings'
+name='skribbl'
 declare -a nativeBuildInputs=('' )
 out='/Users/jadfis/Sinch/Meetings/outputs/out'
 export out

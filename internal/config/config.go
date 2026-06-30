@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	// Transcribe Tonic
+	// TranscripTonic
 	WebhookSecret string
 
 	// LM Studio
@@ -31,7 +31,7 @@ func Load() (*Config, error) {
 	cfg := &Config{}
 	var missing []string
 
-	cfg.WebhookSecret = os.Getenv("TRANSCRIBE_TONIC_WEBHOOK_SECRET") // optional — skip verification if empty
+	cfg.WebhookSecret = getEnvOrDefault("TRANSCRIPTONIC_WEBHOOK_SECRET", os.Getenv("TRANSCRIBE_TONIC_WEBHOOK_SECRET")) // optional — skip verification if empty
 
 	if v := os.Getenv("VAULT_PATH"); v != "" {
 		cfg.VaultPath = v
@@ -43,10 +43,10 @@ func Load() (*Config, error) {
 	}
 
 	cfg.LMStudioURL = getEnvOrDefault("LM_STUDIO_URL", "http://localhost:1234")
-	cfg.LMModel     = getEnvOrDefault("LM_MODEL", "qwen3-27b-instruct")
-	cfg.Host        = getEnvOrDefault("HOST", "0.0.0.0")
-	cfg.Port        = getEnvInt("PORT", 5050)
-	cfg.Debug       = getEnvBool("DEBUG", false)
+	cfg.LMModel = getEnvOrDefault("LM_MODEL", "qwen3-27b-instruct")
+	cfg.Host = getEnvOrDefault("HOST", "0.0.0.0")
+	cfg.Port = getEnvInt("PORT", 5050)
+	cfg.Debug = getEnvBool("DEBUG", false)
 
 	return cfg, nil
 }
