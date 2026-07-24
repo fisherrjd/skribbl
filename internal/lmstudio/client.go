@@ -6,8 +6,29 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 )
+
+// reasoning models (MiniMax-M3, Qwen3, …) prepend their chain-of-thought
+// wrapped in <think>…</think> before the actual answer. Strip it so the
+// reasoning never lands in a summary or profile.
+var thinkRe = regexp.MustCompile(`(?s)<think>.*?</think>`)
+
+func stripThink(s string) string {
+	// Preferred: the answer is whatever follows the final </think>.
+	if i := strings.LastIndex(s, "</think>"); i != -1 {
+		return strings.TrimSpace(s[i+len("</think>"):])
+	}
+	// Well-formed blocks anywhere (defensive; handles a stray closing tag above not matching).
+	s = thinkRe.ReplaceAllString(s, "")
+	// Unterminated leading <think> with no close: drop from the tag onward.
+	if i := strings.Index(s, "<think>"); i != -1 {
+		s = s[:i]
+	}
+	return strings.TrimSpace(s)
+}
 
 type Client struct {
 	baseURL string
@@ -101,5 +122,5 @@ func (c *Client) Complete(systemPrompt, userPrompt string) (string, error) {
 		return "", fmt.Errorf("LM Studio returned no choices")
 	}
 
-	return result.Choices[0].Message.Content, nil
+	return stripThink(result.Choices[0].Message.Content), nil
 }
