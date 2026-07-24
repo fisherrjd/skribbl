@@ -1,3 +1,4 @@
 .env
-meetings        
+meetings
 meetings.exe
+.direnv/

@@ -33,7 +33,7 @@ func main() {
 		})))
 	}
 
-	lm := lmstudio.New(cfg.LMStudioURL, cfg.LMModel)
+	lm := lmstudio.New(cfg.LMStudioURL, cfg.LMModel, cfg.LMStudioAPIKey)
 	proc := processor.New(lm, cfg.VaultPath)
 
 	mux := http.NewServeMux()

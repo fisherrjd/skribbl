@@ -12,9 +12,10 @@ type Config struct {
 	// TranscripTonic
 	WebhookSecret string
 
-	// LM Studio
-	LMStudioURL string
-	LMModel     string
+	// LLM (LM Studio, MiniMax, or any OpenAI-compatible endpoint)
+	LMStudioURL    string
+	LMModel        string
+	LMStudioAPIKey string
 
 	// Obsidian vault
 	VaultPath string
@@ -44,6 +45,7 @@ func Load() (*Config, error) {
 
 	cfg.LMStudioURL = getEnvOrDefault("LM_STUDIO_URL", "http://localhost:1234")
 	cfg.LMModel = getEnvOrDefault("LM_MODEL", "qwen3-27b-instruct")
+	cfg.LMStudioAPIKey = os.Getenv("LM_STUDIO_API_KEY") // optional — empty for keyless backends like LM Studio
 	cfg.Host = getEnvOrDefault("HOST", "0.0.0.0")
 	cfg.Port = getEnvInt("PORT", 5050)
 	cfg.Debug = getEnvBool("DEBUG", false)

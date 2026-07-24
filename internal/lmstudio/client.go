@@ -12,14 +12,19 @@ import (
 type Client struct {
 	baseURL string
 	model   string
+	apiKey  string
 	http    *http.Client
 }
 
-func New(baseURL, model string) *Client {
+// New builds a client for any OpenAI-compatible endpoint. apiKey may be empty
+// for keyless backends like LM Studio; when set it is sent as a Bearer token
+// (required by hosted providers such as MiniMax).
+func New(baseURL, model, apiKey string) *Client {
 	return &Client{
 		baseURL: baseURL,
 		model:   model,
-		// Quality > speed — Qwen3 27B on a long transcript can take several minutes
+		apiKey:  apiKey,
+		// Quality > speed — a long transcript can take several minutes
 		http: &http.Client{Timeout: 20 * time.Minute},
 	}
 }
@@ -61,13 +66,22 @@ func (c *Client) Complete(systemPrompt, userPrompt string) (string, error) {
 		return "", fmt.Errorf("marshal request: %w", err)
 	}
 
-	resp, err := c.http.Post(
+	req, err := http.NewRequest(
+		http.MethodPost,
 		c.baseURL+"/v1/chat/completions",
-		"application/json",
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return "", fmt.Errorf("POST to LM Studio: %w", err)
+		return "", fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if c.apiKey != "" {
+		req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("POST to LLM: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -76,7 +90,7 @@ func (c *Client) Complete(systemPrompt, userPrompt string) (string, error) {
 		return "", fmt.Errorf("read response: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("LM Studio returned %s: %s", resp.Status, raw)
+		return "", fmt.Errorf("LLM returned %s: %s", resp.Status, raw)
 	}
 
 	var result completionResponse
