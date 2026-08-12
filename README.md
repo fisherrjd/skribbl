@@ -130,7 +130,7 @@ The service is managed through the `cfg` nix-darwin flake. To deploy any code ch
 
 ```bash
 # 1 — commit changes in this repo
-cd ~/Sinch/Meetings
+cd ~/github/skribbl
 git add -A && git commit -m "your message"
 
 # 2 — update the lock in cfg to pick up the new commit
@@ -146,7 +146,7 @@ nix-darwin handles rebuilding the binary, updating the plist, and bouncing the s
 ### One-off / dev run
 
 ```bash
-cd ~/Sinch/Meetings
+cd ~/github/skribbl
 go run .
 ```
 
@@ -175,7 +175,7 @@ Do not rename the file before ingesting.
 
 To rebuild the binary:
 ```bash
-cd ~/Sinch/Meetings
+cd ~/github/skribbl
 go build -o ingest ./cmd/ingest
 ```
 
