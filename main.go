@@ -34,7 +34,8 @@ func main() {
 	}
 
 	lm := lmstudio.New(cfg.LMStudioURL, cfg.LMModel, cfg.LMStudioAPIKey)
-	proc := processor.New(lm, cfg.VaultPath)
+	models := lmstudio.NewManager(cfg.LMManageModel, cfg.LMSBin, cfg.LMModel, cfg.LMContextLen, cfg.LMTTL)
+	proc := processor.New(lm, models, cfg.VaultPath)
 
 	mux := http.NewServeMux()
 	h := webhook.NewHandler(cfg.WebhookSecret, cfg.Debug, proc)
@@ -56,6 +57,10 @@ func main() {
 	slog.Info("webhook", "path", "POST /webhook/transcribe-tonic")
 	slog.Info("health", "path", "GET  /health")
 	slog.Info("lm studio", "url", cfg.LMStudioURL, "model", cfg.LMModel)
+	if cfg.LMManageModel {
+		slog.Info("model lifecycle", "mode", "load per meeting, unload after",
+			"context", cfg.LMContextLen, "ttl", cfg.LMTTL, "lms", cfg.LMSBin)
+	}
 	slog.Info("vault", "path", cfg.VaultPath)
 	slog.Info("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 

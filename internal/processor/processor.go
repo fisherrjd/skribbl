@@ -15,12 +15,13 @@ import (
 
 type Processor struct {
 	lm        *lmstudio.Client
+	models    *lmstudio.Manager
 	vaultPath string
 	mu        sync.Mutex
 }
 
-func New(lm *lmstudio.Client, vaultPath string) *Processor {
-	return &Processor{lm: lm, vaultPath: vaultPath}
+func New(lm *lmstudio.Client, models *lmstudio.Manager, vaultPath string) *Processor {
+	return &Processor{lm: lm, models: models, vaultPath: vaultPath}
 }
 
 func (p *Processor) Process(payload webhook.Payload) {
@@ -70,10 +71,22 @@ func (p *Processor) Process(payload webhook.Payload) {
 		}
 	}
 
-	// 2. generate meeting summary
+	// 2. bring the model into VRAM for the length of this meeting only. The
+	// deferred Unload runs before mu.Unlock, so a queued meeting waits for the
+	// release rather than racing the next load.
+	if transcript != "" {
+		if err := p.models.Load(); err != nil {
+			// Not fatal: LM Studio JIT-loads on first request anyway, just at
+			// its default context window.
+			slog.Error("loading model, continuing", "err", err)
+		}
+		defer p.models.Unload()
+	}
+
+	// 3. generate meeting summary
 	p.generateSummary(payload, title, date, meetingDir, transcript, dict)
 
-	// 3. update person profiles
+	// 4. update person profiles
 	participants := payload.Participants()
 	for _, name := range participants {
 		p.updatePersonProfile(payload, name, title, date, transcript, dict)

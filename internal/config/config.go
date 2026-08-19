@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/joho/godotenv"
@@ -16,6 +17,13 @@ type Config struct {
 	LMStudioURL    string
 	LMModel        string
 	LMStudioAPIKey string
+
+	// Model lifecycle: load LMModel before a meeting, unload it after. Local
+	// LM Studio only — leave off for hosted backends.
+	LMManageModel bool
+	LMSBin        string
+	LMContextLen  int
+	LMTTL         int
 
 	// Obsidian vault
 	VaultPath string
@@ -46,11 +54,29 @@ func Load() (*Config, error) {
 	cfg.LMStudioURL = getEnvOrDefault("LM_STUDIO_URL", "http://localhost:1234")
 	cfg.LMModel = getEnvOrDefault("LM_MODEL", "qwen3-27b-instruct")
 	cfg.LMStudioAPIKey = os.Getenv("LM_STUDIO_API_KEY") // optional — empty for keyless backends like LM Studio
+	cfg.LMManageModel = getEnvBool("LM_MANAGE_MODEL", false)
+	cfg.LMSBin = getEnvOrDefault("LMS_BIN", defaultLMSBin())
+	cfg.LMContextLen = getEnvInt("LM_CONTEXT_LENGTH", 0) // 0 = LM Studio's per-model default
+	cfg.LMTTL = getEnvInt("LM_TTL", 900)
 	cfg.Host = getEnvOrDefault("HOST", "0.0.0.0")
 	cfg.Port = getEnvInt("PORT", 5050)
 	cfg.Debug = getEnvBool("DEBUG", false)
 
 	return cfg, nil
+}
+
+// defaultLMSBin is where LM Studio installs its CLI. Falls back to a bare "lms"
+// so a PATH install still works.
+func defaultLMSBin() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "lms"
+	}
+	path := filepath.Join(home, ".lmstudio", "bin", "lms")
+	if _, err := os.Stat(path); err != nil {
+		return "lms"
+	}
+	return path
 }
 
 func getEnvOrDefault(key, def string) string {

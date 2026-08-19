@@ -49,6 +49,15 @@ Apply these corrections silently — do not mention them in the profile.
 ` + dict
 }
 
+// yamlString renders s as a YAML double-quoted scalar. Meeting titles routinely
+// contain characters YAML treats specially (":", "|", "#"), so they can never be
+// emitted bare.
+func yamlString(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, `"`, `\"`)
+	return `"` + s + `"`
+}
+
 func summaryPrompt(title, date, duration, software string, participants []string, transcript string) string {
 	// build YAML frontmatter — generated in Go so it's always valid
 	yamlLines := make([]string, len(participants))
@@ -56,8 +65,8 @@ func summaryPrompt(title, date, duration, software string, participants []string
 		yamlLines[i] = fmt.Sprintf("  - \"[[people/%s|%s]]\"", kb.NameSlug(p), p)
 	}
 	frontmatter := fmt.Sprintf(
-		"---\ndate: %s\nduration: %s\nsoftware: %s\nparticipants:\n%s\ntags:\n  - meeting\n---",
-		date, duration, software, strings.Join(yamlLines, "\n"),
+		"---\ntitle: %s\ndate: %s\nduration: %s\nsoftware: %s\nparticipants:\n%s\ntags:\n  - meeting\n---",
+		yamlString(title), date, duration, software, strings.Join(yamlLines, "\n"),
 	)
 
 	// wikilinks for the footer — people/<slug>|Name so Obsidian resolves correctly
@@ -210,13 +219,13 @@ func isWikilink(s string) bool {
 
 // ── person profile ────────────────────────────────────────────────────────────
 
-// meetingHistoryBlock returns a Dataview query block for the last 7 days of
+// meetingHistoryBlock returns a Dataview query block for the last 3 months of
 // meetings featuring this person. Generated in Go so it is always syntactically
 // correct and never hallucinated by the LLM.
 func meetingHistoryBlock(name string) string {
 	slug := kb.NameSlug(name)
 	return fmt.Sprintf(
-		"## Meeting History\n\n```dataview\nTABLE date, software, file.link AS Meeting\nFROM \"meetings\"\nWHERE file.name = \"summary\"\nAND contains(string(participants), \"people/%s\")\nAND date >= date(today) - dur(7 days)\nSORT date DESC\n```",
+		"## Meeting History\n\n```dataview\nTABLE WITHOUT ID link(file.link, default(title, file.folder)) AS Meeting, date AS Date, software AS Via\nFROM \"meetings\"\nWHERE file.name = \"summary\"\nAND contains(string(participants), \"people/%s\")\nAND date >= date(today) - dur(3 months)\nSORT date DESC\n```",
 		slug,
 	)
 }
